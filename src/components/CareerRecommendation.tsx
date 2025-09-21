@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Briefcase, TrendingUp, Users, Target } from 'lucide-react';
+import { ArrowLeft, Briefcase, TrendingUp, Users, Target, MessageCircle } from 'lucide-react';
+import { CareerChat } from './CareerChat';
 
 interface CareerRecommendationProps {
   recommendation: string;
@@ -10,6 +12,8 @@ interface CareerRecommendationProps {
 }
 
 export function CareerRecommendation({ recommendation, onStartNew }: CareerRecommendationProps) {
+  const [showChat, setShowChat] = useState(false);
+  
   // Parse the recommendation JSON
   const parsedRecommendation = JSON.parse(recommendation);
   const { 
@@ -19,6 +23,15 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
     nextSteps, 
     reasoning 
   } = parsedRecommendation;
+
+  if (showChat) {
+    return (
+      <CareerChat 
+        assessmentData={recommendation}
+        onBack={() => setShowChat(false)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -123,7 +136,11 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
           </CardContent>
         </Card>
 
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex justify-center gap-4">
+          <Button onClick={() => setShowChat(true)} size="lg">
+            <MessageCircle className="mr-2 h-4 w-4" />
+            Chat with AI Assistant
+          </Button>
           <Button onClick={onStartNew} variant="outline" size="lg">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Take Assessment Again
