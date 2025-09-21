@@ -1,4 +1,6 @@
--- Create the update_updated_at_column function first
+-- Run this in your Supabase Dashboard SQL Editor to set up career assessment limits
+
+-- 1. Create the update_updated_at_column function first
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -7,8 +9,8 @@ BEGIN
 END;
 $$ language plpgsql;
 
--- Create user_assessment_usage table to track career assessment limits
-CREATE TABLE public.user_assessment_usage (
+-- 2. Create user_assessment_usage table to track career assessment limits
+CREATE TABLE IF NOT EXISTS public.user_assessment_usage (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id uuid REFERENCES auth.users(id) NOT NULL UNIQUE,
     assessment_count integer DEFAULT 0 NOT NULL,
@@ -17,28 +19,31 @@ CREATE TABLE public.user_assessment_usage (
     updated_at timestamptz DEFAULT now() NOT NULL
 );
 
--- Enable Row Level Security
+-- 3. Enable Row Level Security
 ALTER TABLE public.user_assessment_usage ENABLE ROW LEVEL SECURITY;
 
--- Create policies
+-- 4. Create policies
+DROP POLICY IF EXISTS "Users can view their own usage" ON public.user_assessment_usage;
 CREATE POLICY "Users can view their own usage" ON public.user_assessment_usage
     FOR SELECT TO authenticated
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Service role can manage usage" ON public.user_assessment_usage;
 CREATE POLICY "Service role can manage usage" ON public.user_assessment_usage
     FOR ALL TO service_role
     USING (true)
     WITH CHECK (true);
 
--- Create updated_at trigger
+-- 5. Create updated_at trigger
+DROP TRIGGER IF EXISTS update_user_assessment_usage_updated_at ON public.user_assessment_usage;
 CREATE TRIGGER update_user_assessment_usage_updated_at 
     BEFORE UPDATE ON public.user_assessment_usage 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Create index for better performance
-CREATE INDEX idx_user_assessment_usage_user_id ON public.user_assessment_usage(user_id);
+-- 6. Create index for better performance
+CREATE INDEX IF NOT EXISTS idx_user_assessment_usage_user_id ON public.user_assessment_usage(user_id);
 
--- Create function to increment assessment count
+-- 7. Create function to increment assessment count
 CREATE OR REPLACE FUNCTION increment_user_assessment_count(user_uuid uuid)
 RETURNS json
 LANGUAGE plpgsql
@@ -66,3 +71,6 @@ BEGIN
     );
 END;
 $$;
+
+-- Success message
+SELECT 'Career assessment limits setup completed successfully!' as status;

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Briefcase, TrendingUp, Users, Target, MessageCircle } from 'lucide-react';
 import { CareerChat } from './CareerChat';
 
@@ -14,15 +13,44 @@ interface CareerRecommendationProps {
 export function CareerRecommendation({ recommendation, onStartNew }: CareerRecommendationProps) {
   const [showChat, setShowChat] = useState(false);
   
-  // Parse the recommendation JSON
-  const parsedRecommendation = JSON.parse(recommendation);
-  const { 
-    primaryCareer, 
-    alternativeCareers, 
-    skills, 
-    nextSteps, 
-    reasoning 
-  } = parsedRecommendation;
+  // Parse the recommendation JSON with error handling
+  let parsedRecommendation;
+  try {
+    parsedRecommendation = JSON.parse(recommendation);
+    console.log('Parsed recommendation:', parsedRecommendation);
+    console.log('Type of parsed recommendation:', typeof parsedRecommendation);
+    console.log('Keys in parsed recommendation:', Object.keys(parsedRecommendation || {}));
+    
+    // Check if it's double-stringified
+    if (typeof parsedRecommendation === 'string') {
+      console.log('Double-stringified JSON detected, parsing again...');
+      parsedRecommendation = JSON.parse(parsedRecommendation);
+      console.log('After second parse:', parsedRecommendation);
+    }
+  } catch (error) {
+    console.error('Error parsing recommendation:', error);
+    console.log('Recommendation string:', recommendation);
+    // Fallback structure
+    parsedRecommendation = {
+      primaryCareer: { title: 'Error loading recommendation', description: '', salary: '', growth: '', education: '' },
+      alternativeCareers: [],
+      skills: [],
+      nextSteps: [],
+      reasoning: 'There was an error loading your recommendation. Please try again.'
+    };
+  }
+  
+  // Debug the issue
+  console.log('parsedRecommendation exists:', !!parsedRecommendation);
+  console.log('parsedRecommendation.primaryCareer exists:', !!parsedRecommendation?.primaryCareer);
+  console.log('parsedRecommendation.primaryCareer:', parsedRecommendation?.primaryCareer);
+  
+  // Get the actual properties from parsed data, with fallbacks only if they don't exist
+  const primaryCareer = parsedRecommendation.primaryCareer;
+  const alternativeCareers = parsedRecommendation.alternativeCareers || [];
+  const skills = parsedRecommendation.skills || [];
+  const nextSteps = parsedRecommendation.nextSteps || [];
+  const reasoning = parsedRecommendation.reasoning || 'This recommendation is based on your assessment answers.';
 
   if (showChat) {
     return (
@@ -32,6 +60,8 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
       />
     );
   }
+  console.log('primaryCareer after assignment:', primaryCareer);
+  console.log('Full parsed data:', parsedRecommendation);
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -58,15 +88,15 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
             </CardHeader>
             <CardContent>
               <h3 className="text-2xl font-bold text-primary mb-2">
-                {primaryCareer.title}
+                {primaryCareer?.title || 'Career Recommendation'}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {primaryCareer.description}
+                {primaryCareer?.description || 'No description available'}
               </p>
               <div className="space-y-2">
-                <p><strong>Average Salary:</strong> {primaryCareer.salary}</p>
-                <p><strong>Growth Outlook:</strong> {primaryCareer.growth}</p>
-                <p><strong>Education Required:</strong> {primaryCareer.education}</p>
+                <p><strong>Average Salary:</strong> {primaryCareer?.salary || 'Not specified'}</p>
+                <p><strong>Growth Outlook:</strong> {primaryCareer?.growth || 'Not specified'}</p>
+                <p><strong>Education Required:</strong> {primaryCareer?.education || 'Not specified'}</p>
               </div>
             </CardContent>
           </Card>
@@ -80,10 +110,10 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {alternativeCareers.map((career: any, index: number) => (
+                {(alternativeCareers || []).map((career: any, index: number) => (
                   <div key={index} className="p-3 border rounded-lg">
-                    <h4 className="font-semibold">{career.title}</h4>
-                    <p className="text-sm text-muted-foreground">{career.description}</p>
+                    <h4 className="font-semibold">{career?.title || 'Alternative Career'}</h4>
+                    <p className="text-sm text-muted-foreground">{career?.description || ''}</p>
                   </div>
                 ))}
               </div>
@@ -99,7 +129,7 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {skills.map((skill: string, index: number) => (
+                {(skills || []).map((skill: string, index: number) => (
                   <Badge key={index} variant="secondary">
                     {skill}
                   </Badge>
@@ -114,7 +144,7 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
             </CardHeader>
             <CardContent>
               <ol className="space-y-2">
-                {nextSteps.map((step: string, index: number) => (
+                {(nextSteps || []).map((step: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
                       {index + 1}
@@ -132,7 +162,7 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
             <CardTitle>Why This Recommendation?</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{reasoning}</p>
+            <p className="text-muted-foreground">{reasoning || 'This recommendation is based on your assessment answers.'}</p>
           </CardContent>
         </Card>
 
