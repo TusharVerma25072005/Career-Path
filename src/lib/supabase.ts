@@ -38,6 +38,29 @@ export type Database = {
           updated_at?: string;
         };
       };
+      chat_messages: {
+        Row: {
+          id: string;
+          user_id: string;
+          content: string;
+          is_user: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          content: string;
+          is_user: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          content?: string;
+          is_user?: boolean;
+          created_at?: string;
+        };
+      };
     };
   };
 };
