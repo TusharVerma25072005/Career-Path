@@ -14,26 +14,35 @@ interface Message {
   content: string;
   is_user: boolean;
   created_at: string;
+  assessment_id?: string;
 }
 
 interface CareerChatProps {
   assessmentData: string;
+  assessmentId?: string;
   onBack: () => void;
 }
 
-export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
+export function CareerChat({ assessmentData, assessmentId, onBack }: CareerChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(true);
-  const [usage, setUsage] = useState({ chat_count: 0, remaining: 5, limit_exceeded: false });
   const { user } = useAuth();
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log('CareerChat mounted with assessmentId:', assessmentId);
     loadChatHistory();
   }, []);
+
+  useEffect(() => {
+    if (assessmentId) {
+      console.log('AssessmentId changed, reloading chat history for:', assessmentId);
+      loadChatHistory();
+    }
+  }, [assessmentId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -50,14 +59,46 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
 
   const loadChatHistory = async () => {
     try {
+      console.log('Loading chat history for user:', user?.id, 'assessmentId:', assessmentId);
+
+      if (assessmentId) {
+        const { data: assessmentData, error: assessmentError } = await supabase
+          .from('assessment_chat_messages')
+          .select('*')
+          .eq('user_id', user?.id)
+          .eq('assessment_id', assessmentId)
+          .order('created_at', { ascending: true });
+
+        if (!assessmentError) {
+          console.log('assessment_chat_messages table exists, loaded messages:', assessmentData);
+          setMessages(assessmentData || []);
+          setLoadingMessages(false);
+          return;
+        }
+
+        console.log('assessment_chat_messages table does not exist yet');
+
+        console.log('Starting fresh assessment-specific chat (table not migrated yet)');
+        setMessages([]);
+        setLoadingMessages(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      setMessages(data || []);
+      if (error) {
+        console.error('Error loading from chat_messages:', error);
+        setMessages([]);
+      } else {
+        console.log('Loaded messages from general chat_messages:', data);
+        setMessages(data || []);
+      }
+
+      setLoadingMessages(false);
     } catch (error) {
       console.error('Error loading chat history:', error);
       toast({
@@ -65,19 +106,20 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
         description: "Please try again later.",
         variant: "destructive"
       });
+      setMessages([]);
+      setLoadingMessages(false);
     } finally {
       setLoadingMessages(false);
     }
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || isLoading || usage.limit_exceeded) return;
+    if (!newMessage.trim() || isLoading) return;
 
     const userMessage = newMessage.trim();
     setNewMessage('');
     setIsLoading(true);
 
-    // Add user message to UI immediately
     const tempUserMessage: Message = {
       id: `temp-${Date.now()}`,
       content: userMessage,
@@ -87,57 +129,47 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
     setMessages(prev => [...prev, tempUserMessage]);
 
     try {
-      // Call the Edge Function
+      console.log('Sending message with assessmentId:', assessmentId);
+
       const { data, error } = await supabase.functions.invoke('career-chat', {
         body: {
           message: userMessage,
           assessmentData: assessmentData,
-          userId: user?.id
+          userId: user?.id,
+          assessmentId: assessmentId
         }
       });
 
       if (error) throw error;
 
-      // Check for rate limit exceeded
-      if (data?.limit_exceeded) {
-        // Remove temp message
-        setMessages(prev => prev.filter(msg => msg.id !== tempUserMessage.id));
-        
-        setUsage({
-          chat_count: data.chat_count || 0,
-          remaining: data.remaining || 0,
-          limit_exceeded: true
-        });
-
-        toast({
-          title: "Chat limit reached",
-          description: data.message || "You have reached the maximum of 5 free chat requests.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Update usage information
-      if (data?.usage) {
-        setUsage(data.usage);
-      }
-
-      // Remove temp message and add real messages
-      setMessages(prev => prev.filter(msg => msg.id !== tempUserMessage.id));
-      
-      // Reload messages to get the latest from database
-      await loadChatHistory();
+      setMessages(prev => {
+        const filtered = prev.filter(msg => msg.id !== tempUserMessage.id);
+        return [
+          ...filtered,
+          {
+            id: `user-${Date.now()}`,
+            content: userMessage,
+            is_user: true,
+            created_at: new Date().toISOString()
+          },
+          {
+            id: `ai-${Date.now()}`,
+            content: data?.aiResponse || 'Sorry, I could not generate a response.',
+            is_user: false,
+            created_at: new Date().toISOString()
+          }
+        ];
+      });
 
       toast({
         title: "Message sent!",
-        description: `${data?.usage?.remaining || 0} free messages remaining.`
+        description: "Response received successfully."
       });
 
     } catch (error) {
       console.error('Error sending message:', error);
-      // Remove temp message on error
       setMessages(prev => prev.filter(msg => msg.id !== tempUserMessage.id));
-      
+
       toast({
         title: "Error sending message",
         description: "Please try again later.",
@@ -164,11 +196,6 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-primary" />
                 <CardTitle>Career Guidance Chat</CardTitle>
-                {!usage.limit_exceeded && (
-                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
-                    {usage.remaining} free messages left
-                  </span>
-                )}
               </div>
               <Button variant="outline" size="sm" onClick={onBack}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -179,19 +206,23 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
               <p className="text-sm text-muted-foreground">
                 Chat with our AI assistant about your career assessment results and get personalized guidance.
               </p>
-              {usage.limit_exceeded && (
-                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                  <p className="text-sm text-destructive font-medium">
-                    🚫 Free chat limit reached (5/5 messages used)
+              {assessmentId ? (
+                <div className="space-y-1">
+                  <p className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                    ✓ Assessment-specific chat session (ID: {assessmentId.slice(0, 8)}...)
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Upgrade to Pro for unlimited AI chat access and advanced features.
+                  <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                    💡 Run the database migration to enable isolated chat sessions per assessment
                   </p>
                 </div>
+              ) : (
+                <p className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                  ⚠ General chat session (not assessment-specific)
+                </p>
               )}
             </div>
           </CardHeader>
-          
+
           <CardContent className="flex-1 flex flex-col gap-4 min-h-0">
             <ScrollArea ref={scrollAreaRef} className="flex-1 pr-4">
               <div className="space-y-4">
@@ -204,7 +235,7 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
                     <Bot className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Start Your Career Conversation</h3>
                     <p className="text-muted-foreground max-w-md">
-                      Ask me anything about your career assessment results, potential career paths, 
+                      Ask me anything about your career assessment results, potential career paths,
                       skills development, or job market insights.
                     </p>
                   </div>
@@ -220,11 +251,10 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
                         </div>
                       )}
                       <div
-                        className={`max-w-[80%] p-3 rounded-lg ${
-                          message.is_user
+                        className={`max-w-[80%] p-3 rounded-lg ${message.is_user
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted text-muted-foreground'
-                        }`}
+                          }`}
                       >
                         {message.is_user ? (
                           <p className="whitespace-pre-wrap">{message.content}</p>
@@ -232,7 +262,6 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
                           <div className="chat-markdown">
                             <ReactMarkdown
                               components={{
-                                // Simplified components using our custom CSS
                                 p: ({ children }) => <p>{children}</p>,
                                 ul: ({ children }) => <ul className="list-disc list-inside">{children}</ul>,
                                 ol: ({ children }) => <ol className="list-decimal list-inside">{children}</ol>,
@@ -285,17 +314,16 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={usage.limit_exceeded ? "Free chat limit reached - upgrade for unlimited access" : "Ask about your career assessment, job market trends, skill development..."}
+                placeholder="Ask about your career assessment, job market trends, skill development..."
                 className="resize-none"
                 rows={3}
-                disabled={isLoading || usage.limit_exceeded}
+                disabled={isLoading}
               />
-              <Button 
+              <Button
                 onClick={sendMessage}
-                disabled={!newMessage.trim() || isLoading || usage.limit_exceeded}
+                disabled={!newMessage.trim() || isLoading}
                 size="lg"
                 className="px-4"
-                title={usage.limit_exceeded ? "Upgrade to continue chatting" : undefined}
               >
                 <Send className="h-4 w-4" />
               </Button>

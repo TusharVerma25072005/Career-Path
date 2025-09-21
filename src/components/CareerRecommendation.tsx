@@ -7,30 +7,22 @@ import { CareerChat } from './CareerChat';
 
 interface CareerRecommendationProps {
   recommendation: string;
+  assessmentId?: string;
   onStartNew: () => void;
 }
 
-export function CareerRecommendation({ recommendation, onStartNew }: CareerRecommendationProps) {
+export function CareerRecommendation({ recommendation, assessmentId, onStartNew }: CareerRecommendationProps) {
   const [showChat, setShowChat] = useState(false);
   
-  // Parse the recommendation JSON with error handling
   let parsedRecommendation;
   try {
     parsedRecommendation = JSON.parse(recommendation);
-    console.log('Parsed recommendation:', parsedRecommendation);
-    console.log('Type of parsed recommendation:', typeof parsedRecommendation);
-    console.log('Keys in parsed recommendation:', Object.keys(parsedRecommendation || {}));
     
-    // Check if it's double-stringified
     if (typeof parsedRecommendation === 'string') {
-      console.log('Double-stringified JSON detected, parsing again...');
       parsedRecommendation = JSON.parse(parsedRecommendation);
-      console.log('After second parse:', parsedRecommendation);
     }
   } catch (error) {
     console.error('Error parsing recommendation:', error);
-    console.log('Recommendation string:', recommendation);
-    // Fallback structure
     parsedRecommendation = {
       primaryCareer: { title: 'Error loading recommendation', description: '', salary: '', growth: '', education: '' },
       alternativeCareers: [],
@@ -40,12 +32,6 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
     };
   }
   
-  // Debug the issue
-  console.log('parsedRecommendation exists:', !!parsedRecommendation);
-  console.log('parsedRecommendation.primaryCareer exists:', !!parsedRecommendation?.primaryCareer);
-  console.log('parsedRecommendation.primaryCareer:', parsedRecommendation?.primaryCareer);
-  
-  // Get the actual properties from parsed data, with fallbacks only if they don't exist
   const primaryCareer = parsedRecommendation.primaryCareer;
   const alternativeCareers = parsedRecommendation.alternativeCareers || [];
   const skills = parsedRecommendation.skills || [];
@@ -56,6 +42,7 @@ export function CareerRecommendation({ recommendation, onStartNew }: CareerRecom
     return (
       <CareerChat 
         assessmentData={recommendation}
+        assessmentId={assessmentId}
         onBack={() => setShowChat(false)}
       />
     );
