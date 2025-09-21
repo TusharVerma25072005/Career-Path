@@ -7,6 +7,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Send, MessageCircle, Bot, User, ArrowLeft } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -178,7 +179,31 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
                             : 'bg-muted text-muted-foreground'
                         }`}
                       >
-                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        {message.is_user ? (
+                          <p className="whitespace-pre-wrap">{message.content}</p>
+                        ) : (
+                          <div className="chat-markdown">
+                            <ReactMarkdown
+                              components={{
+                                // Simplified components using our custom CSS
+                                p: ({ children }) => <p>{children}</p>,
+                                ul: ({ children }) => <ul className="list-disc list-inside">{children}</ul>,
+                                ol: ({ children }) => <ol className="list-decimal list-inside">{children}</ol>,
+                                li: ({ children }) => <li>{children}</li>,
+                                strong: ({ children }) => <strong>{children}</strong>,
+                                em: ({ children }) => <em>{children}</em>,
+                                code: ({ children }) => <code>{children}</code>,
+                                h1: ({ children }) => <h1>{children}</h1>,
+                                h2: ({ children }) => <h2>{children}</h2>,
+                                h3: ({ children }) => <h3>{children}</h3>,
+                                blockquote: ({ children }) => <blockquote>{children}</blockquote>,
+                                hr: ({ children }) => <hr>{children}</hr>,
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
+                        )}
                         <p className={`text-xs mt-2 opacity-70`}>
                           {new Date(message.created_at).toLocaleTimeString()}
                         </p>

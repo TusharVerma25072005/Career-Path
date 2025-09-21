@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     } 
     
     Provide helpful, personalized career advice based on their assessment results (if available), current job market trends, and skill development recommendations. 
-    Keep responses conversational, encouraging, and actionable. Limit responses to 200 words.`
+    Keep responses conversational, encouraging, and actionable. Limit responses to 200 words and provide response in purely markdown format.`
 
     // 3. Call Google Gemini API
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
