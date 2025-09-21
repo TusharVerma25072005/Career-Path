@@ -206,20 +206,7 @@ export function CareerChat({ assessmentData, assessmentId, onBack }: CareerChatP
               <p className="text-sm text-muted-foreground">
                 Chat with our AI assistant about your career assessment results and get personalized guidance.
               </p>
-              {assessmentId ? (
-                <div className="space-y-1">
-                  <p className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                    ✓ Assessment-specific chat session (ID: {assessmentId.slice(0, 8)}...)
-                  </p>
-                  <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                    💡 Run the database migration to enable isolated chat sessions per assessment
-                  </p>
-                </div>
-              ) : (
-                <p className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-                  ⚠ General chat session (not assessment-specific)
-                </p>
-              )}
+              
             </div>
           </CardHeader>
 
