@@ -36,19 +36,32 @@ export function Dashboard() {
 
   const loadSavedAssessments = async () => {
     try {
+      console.log('Loading assessments for user:', user?.id);
+      
       const { data, error } = await supabase
         .from('career_assessments')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
+      
+      console.log('Loaded assessments:', data);
       setSavedAssessments(data || []);
     } catch (error) {
       console.error('Error loading assessments:', error);
+      
+      let errorMessage = "Please try again later.";
+      if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = (error as any).message;
+      }
+      
       toast({
         title: "Error loading assessments",
-        description: "Please try again later.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -58,18 +71,33 @@ export function Dashboard() {
 
   const handleAssessmentComplete = async (answers: Record<string, string>) => {
     try {
+      // Check authentication first
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      console.log('Current authenticated user:', currentUser);
+      console.log('User from context:', user);
+      
       const recommendation = generateCareerRecommendation(answers);
       
+      console.log('Generated recommendation:', recommendation);
+      console.log('User ID:', user?.id);
+      console.log('Answers:', answers);
+      
       // Save to database
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('career_assessments')
         .insert({
           user_id: user?.id,
           answers,
           recommendation
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
+
+      console.log('Successfully saved assessment:', data);
 
       setCurrentRecommendation(recommendation);
       setAssessmentState('completed');
@@ -83,9 +111,16 @@ export function Dashboard() {
       });
     } catch (error) {
       console.error('Error saving assessment:', error);
+      
+      // More detailed error handling
+      let errorMessage = "Please try again later.";
+      if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = (error as any).message;
+      }
+      
       toast({
         title: "Error saving assessment",
-        description: "Please try again later.",
+        description: errorMessage,
         variant: "destructive"
       });
     }
