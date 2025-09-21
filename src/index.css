@@ -142,10 +142,10 @@ All colors MUST be HSL.
   }
   
   .chat-markdown blockquote {
-    @apply border-l-2 border-current/30 pl-3 ml-2 italic opacity-80;
+    @apply border-l-2 border-gray-300 dark:border-gray-600 pl-3 ml-2 italic opacity-80;
   }
   
   .chat-markdown hr {
-    @apply border-current/20 my-2;
+    @apply border-gray-300 dark:border-gray-600 my-2;
   }
 }

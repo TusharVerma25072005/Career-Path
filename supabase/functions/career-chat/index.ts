@@ -33,7 +33,33 @@ Deno.serve(async (req) => {
       )
     }
 
-    // 1. Store user message in database
+    // 1. Check user chat limit
+    const { data: usageData, error: usageError } = await supabaseClient
+      .rpc('increment_user_chat_count', { user_uuid: userId })
+
+    if (usageError) {
+      console.error('Error checking chat usage:', usageError)
+      // Continue anyway - don't block on usage tracking
+    }
+
+    // If limit exceeded, return error
+    if (usageData?.limit_exceeded) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Chat limit exceeded',
+          message: 'You have reached the maximum of 5 free chat requests. Please upgrade your plan for unlimited access.',
+          limit_exceeded: true,
+          chat_count: usageData.chat_count,
+          remaining: usageData.remaining
+        }),
+        { 
+          status: 429, // Too Many Requests
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // 2. Store user message in database
     const { error: userMessageError } = await supabaseClient
       .from('chat_messages')
       .insert({
@@ -134,7 +160,12 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: 'Chat message processed successfully',
-        aiResponse: aiResponse 
+        aiResponse: aiResponse,
+        usage: {
+          chat_count: usageData?.chat_count || 0,
+          remaining: usageData?.remaining || 5,
+          limit_exceeded: usageData?.limit_exceeded || false
+        }
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

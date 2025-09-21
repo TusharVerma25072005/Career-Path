@@ -26,6 +26,7 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(true);
+  const [usage, setUsage] = useState({ chat_count: 0, remaining: 5, limit_exceeded: false });
   const { user } = useAuth();
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -70,7 +71,7 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || isLoading) return;
+    if (!newMessage.trim() || isLoading || usage.limit_exceeded) return;
 
     const userMessage = newMessage.trim();
     setNewMessage('');
@@ -97,11 +98,40 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
 
       if (error) throw error;
 
+      // Check for rate limit exceeded
+      if (data?.limit_exceeded) {
+        // Remove temp message
+        setMessages(prev => prev.filter(msg => msg.id !== tempUserMessage.id));
+        
+        setUsage({
+          chat_count: data.chat_count || 0,
+          remaining: data.remaining || 0,
+          limit_exceeded: true
+        });
+
+        toast({
+          title: "Chat limit reached",
+          description: data.message || "You have reached the maximum of 5 free chat requests.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update usage information
+      if (data?.usage) {
+        setUsage(data.usage);
+      }
+
       // Remove temp message and add real messages
       setMessages(prev => prev.filter(msg => msg.id !== tempUserMessage.id));
       
       // Reload messages to get the latest from database
       await loadChatHistory();
+
+      toast({
+        title: "Message sent!",
+        description: `${data?.usage?.remaining || 0} free messages remaining.`
+      });
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -134,15 +164,32 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-primary" />
                 <CardTitle>Career Guidance Chat</CardTitle>
+                {!usage.limit_exceeded && (
+                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
+                    {usage.remaining} free messages left
+                  </span>
+                )}
               </div>
               <Button variant="outline" size="sm" onClick={onBack}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Results
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Chat with our AI assistant about your career assessment results and get personalized guidance.
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Chat with our AI assistant about your career assessment results and get personalized guidance.
+              </p>
+              {usage.limit_exceeded && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <p className="text-sm text-destructive font-medium">
+                    🚫 Free chat limit reached (5/5 messages used)
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Upgrade to Pro for unlimited AI chat access and advanced features.
+                  </p>
+                </div>
+              )}
+            </div>
           </CardHeader>
           
           <CardContent className="flex-1 flex flex-col gap-4 min-h-0">
@@ -238,16 +285,17 @@ export function CareerChat({ assessmentData, onBack }: CareerChatProps) {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask about your career assessment, job market trends, skill development..."
+                placeholder={usage.limit_exceeded ? "Free chat limit reached - upgrade for unlimited access" : "Ask about your career assessment, job market trends, skill development..."}
                 className="resize-none"
                 rows={3}
-                disabled={isLoading}
+                disabled={isLoading || usage.limit_exceeded}
               />
               <Button 
                 onClick={sendMessage}
-                disabled={!newMessage.trim() || isLoading}
+                disabled={!newMessage.trim() || isLoading || usage.limit_exceeded}
                 size="lg"
                 className="px-4"
+                title={usage.limit_exceeded ? "Upgrade to continue chatting" : undefined}
               >
                 <Send className="h-4 w-4" />
               </Button>
