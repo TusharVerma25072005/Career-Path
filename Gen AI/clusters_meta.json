@@ -1,0 +1,465 @@
+{
+  "C0.0.0.0.0.0.0": {
+    "centroid": {
+      "verbal_aptitude_weight": 0.013324301542856562,
+      "quantitative_aptitude_weight": 0.3041118919776109,
+      "creativity_requirement": 0.1366840301819149,
+      "teamwork_requirement": -0.3607081835256132,
+      "exploration_requirement": 0.03377661699381633,
+      "salary_inr_avg": 1.6373292995754183,
+      "work_life_balance_score": 0.28963751894644174,
+      "stress_level": -0.0861087852505229,
+      "growth_trajectory_5yr": -0.27559134304083743,
+      "automation_risk_level": -0.16337041961465726,
+      "industry_stability": 0.8408407953304889,
+      "job_security_score": -0.47379652855156895,
+      "entry_difficulty_enc": -0.6932476327082029,
+      "remote_work_feasibility_enc": 0.4999999999999999
+    },
+    "size": 17,
+    "top_jobs": [
+      "Surgeon",
+      "Nurse",
+      "Medical Technician",
+      "Anesthesiologist",
+      "Psychiatrist"
+    ],
+    "primary_categories": {
+      "Medicine": 16,
+      "Engineering": 1
+    }
+  },
+  "C0.0.0.0.0.0.1": {
+    "centroid": {
+      "verbal_aptitude_weight": -0.5604959838794259,
+      "quantitative_aptitude_weight": 1.0155553372721908,
+      "creativity_requirement": 0.06437878377212043,
+      "teamwork_requirement": -1.3309557287010663,
+      "exploration_requirement": -0.28365298429731617,
+      "salary_inr_avg": 0.5092800398770002,
+      "work_life_balance_score": -0.34055144268780313,
+      "stress_level": -0.22063951106825566,
+      "growth_trajectory_5yr": -0.7404890202352328,
+      "automation_risk_level": 1.0461045227497454,
+      "industry_stability": -0.5445601252223908,
+      "job_security_score": 0.3880241508132841,
+      "entry_difficulty_enc": -1.0711703187915727,
+      "remote_work_feasibility_enc": 0.4999999999999999
+    },
+    "size": 9,
+    "top_jobs": [
+      "Physical Therapist",
+      "Cardiologist",
+      "Orthopedic Surgeon",
+      "Hardware Engineer",
+      "Nuclear Engineer"
+    ],
+    "primary_categories": {
+      "Engineering": 5,
+      "Medicine": 3,
+      "Science": 1
+    }
+  },
+  "C0.0.0.0.0.1": {
+    "centroid": {
+      "verbal_aptitude_weight": 0.038854441360373304,
+      "quantitative_aptitude_weight": 0.11745472119619034,
+      "creativity_requirement": -0.2717276350859083,
+      "teamwork_requirement": 0.9449278159677009,
+      "exploration_requirement": 0.7116402863070169,
+      "salary_inr_avg": 0.49844010094772956,
+      "work_life_balance_score": -0.10868421431265907,
+      "stress_level": -1.0424170294531856,
+      "growth_trajectory_5yr": -0.17796283083001452,
+      "automation_risk_level": 0.5181850546636614,
+      "industry_stability": -0.6474895598127632,
+      "job_security_score": -0.5364383862046808,
+      "entry_difficulty_enc": 0.1261574639361939,
+      "remote_work_feasibility_enc": 0.4999999999999999
+    },
+    "size": 20,
+    "top_jobs": [
+      "Doctor",
+      "Veterinarian",
+      "Pharmacist",
+      "Radiologist",
+      "Medical Assistant"
+    ],
+    "primary_categories": {
+      "Medicine": 8,
+      "Commerce": 5,
+      "Engineering": 4,
+      "Law": 2,
+      "Science": 1
+    }
+  },
+  "C0.0.0.0.1.0": {
+    "centroid": {
+      "verbal_aptitude_weight": -0.3383229814198452,
+      "quantitative_aptitude_weight": 0.7025576250044929,
+      "creativity_requirement": 0.5097197887590086,
+      "teamwork_requirement": -0.1389914593351288,
+      "exploration_requirement": -0.7552697337259724,
+      "salary_inr_avg": 0.855418998868479,
+      "work_life_balance_score": -0.2950060942569712,
+      "stress_level": 0.5841791552273627,
+      "growth_trajectory_5yr": 0.6658264532778131,
+      "automation_risk_level": -0.3671100243046533,
+      "industry_stability": -0.9153012166379502,
+      "job_security_score": -0.22583917534133488,
+      "entry_difficulty_enc": 0.6627647324147965,
+      "remote_work_feasibility_enc": 0.4999999999999999
+    },
+    "size": 16,
+    "top_jobs": [
+      "Dentist",
+      "Laboratory Technician",
+      "Genetic Counselor",
+      "Emergency Physician",
+      "Oncologist"
+    ],
+    "primary_categories": {
+      "Medicine": 9,
+      "Engineering": 5,
+      "Science": 2
+    }
+  },
+  "C0.0.0.0.1.1": {
+    "centroid": {
+      "verbal_aptitude_weight": -0.8452448449128938,
+      "quantitative_aptitude_weight": 0.905923914411351,
+      "creativity_requirement": 0.17961527023773033,
+      "teamwork_requirement": 0.6554861804958891,
+      "exploration_requirement": 0.014897678051190208,
+      "salary_inr_avg": 0.11510044244898143,
+      "work_life_balance_score": 1.036455974805399,
+      "stress_level": -0.0035662043250667278,
+      "growth_trajectory_5yr": -0.8024753771944855,
+      "automation_risk_level": -0.8158256036518691,
+      "industry_stability": -0.6518799148426843,
+      "job_security_score": 0.2004381001176513,
+      "entry_difficulty_enc": 0.4376573748897591,
+      "remote_work_feasibility_enc": 0.361111111111111
+    },
+    "size": 18,
+    "top_jobs": [
+      "Medical Researcher",
+      "Hospital Administrator",
+      "Platform Engineer",
+      "Chemical Engineer",
+      "Computer Engineer"
+    ],
+    "primary_categories": {
+      "Engineering": 12,
+      "Medicine": 2,
+      "Science": 2,
+      "Technology": 1,
+      "Commerce": 1
+    }
+  },
+  "C0.0.0.1.0.0": {
+    "centroid": {
+      "verbal_aptitude_weight": -0.05010461725842743,
+      "quantitative_aptitude_weight": 0.3398444457612053,
+      "creativity_requirement": 0.7466121855286659,
+      "teamwork_requirement": 0.03574664534332,
+      "exploration_requirement": -0.3527739528627855,
+      "salary_inr_avg": -0.9757487478246445,
+      "work_life_balance_score": -0.4253156823422479,
+      "stress_level": -0.5752375214624093,
+      "growth_trajectory_5yr": 0.3550524625446031,
+      "automation_risk_level": -0.7551452050212848,
+      "industry_stability": 0.008582189658489493,
+      "job_security_score": 0.08730091681069767,
+      "entry_difficulty_enc": -0.22047083371458048,
+      "remote_work_feasibility_enc": 0.49999999999999994
+    },
+    "size": 23,
+    "top_jobs": [
+      "Software Engineer",
+      "Mining Engineer",
+      "Investment Banker",
+      "Brand Manager",
+      "Digital Marketing Specialist"
+    ],
+    "primary_categories": {
+      "Science": 13,
+      "Commerce": 8,
+      "Engineering": 2
+    }
+  },
+  "C0.0.0.1.0.1": {
+    "centroid": {
+      "verbal_aptitude_weight": 0.15434793101104455,
+      "quantitative_aptitude_weight": -0.2577169056480582,
+      "creativity_requirement": 0.01805823529084581,
+      "teamwork_requirement": 0.19765062011622203,
+      "exploration_requirement": 0.9979196383428165,
+      "salary_inr_avg": -0.6373188479356777,
+      "work_life_balance_score": -1.0230705831149975,
+      "stress_level": 0.3120109558982249,
+      "growth_trajectory_5yr": 0.14691860476230414,
+      "automation_risk_level": -0.352738350944778,
+      "industry_stability": 0.6858870883920973,
+      "job_security_score": 0.6822767793554535,
+      "entry_difficulty_enc": 0.801264807712395,
+      "remote_work_feasibility_enc": 0.4999999999999999
+    },
+    "size": 17,
+    "top_jobs": [
+      "Criminal Lawyer",
+      "Arbitrator",
+      "Court Reporter",
+      "Labor Relations Lawyer",
+      "Aerospace Engineer"
+    ],
+    "primary_categories": {
+      "Commerce": 6,
+      "Science": 6,
+      "Law": 4,
+      "Engineering": 1
+    }
+  },
+  "C0.0.0.1.1": {
+    "centroid": {
+      "verbal_aptitude_weight": -0.23769312759263747,
+      "quantitative_aptitude_weight": 0.36027266120111345,
+      "creativity_requirement": -0.6681960230449707,
+      "teamwork_requirement": 0.18365666513773002,
+      "exploration_requirement": -0.05654123043934517,
+      "salary_inr_avg": -0.31286597761572454,
+      "work_life_balance_score": 0.3476142671836155,
+      "stress_level": 0.5058915563987444,
+      "growth_trajectory_5yr": 0.9729909899955383,
+      "automation_risk_level": -0.41569996756899336,
+      "industry_stability": 0.4979749739461748,
+      "job_security_score": -0.6234288404833149,
+      "entry_difficulty_enc": -0.5705454619019141,
+      "remote_work_feasibility_enc": 0.3809523809523809
+    },
+    "size": 21,
+    "top_jobs": [
+      "Medical Writer",
+      "Health Informatics Specialist",
+      "Full Stack Developer",
+      "Materials Engineer",
+      "Network Engineer"
+    ],
+    "primary_categories": {
+      "Commerce": 8,
+      "Engineering": 6,
+      "Science": 4,
+      "Medicine": 2,
+      "Technology": 1
+    }
+  },
+  "C0.0.1.0": {
+    "centroid": {
+      "verbal_aptitude_weight": -1.0862709776070292,
+      "quantitative_aptitude_weight": 0.34162905466203575,
+      "creativity_requirement": -0.15303405402633025,
+      "teamwork_requirement": -0.3083148160861387,
+      "exploration_requirement": -0.1958790895668553,
+      "salary_inr_avg": 0.3121902411629908,
+      "work_life_balance_score": -0.07291041336335104,
+      "stress_level": -0.0739599766546436,
+      "growth_trajectory_5yr": 0.6225909692987343,
+      "automation_risk_level": -0.08370062564791364,
+      "industry_stability": 0.015454049705322546,
+      "job_security_score": 0.29990680597369457,
+      "entry_difficulty_enc": -0.4170205057890854,
+      "remote_work_feasibility_enc": -2.0
+    },
+    "size": 25,
+    "top_jobs": [
+      "Data Scientist",
+      "Cybersecurity Specialist",
+      "Web Developer",
+      "Mobile App Developer",
+      "Database Administrator"
+    ],
+    "primary_categories": {
+      "Technology": 25
+    }
+  },
+  "C0.0.1.1": {
+    "centroid": {
+      "verbal_aptitude_weight": -0.9611227933235358,
+      "quantitative_aptitude_weight": 0.28018148546717225,
+      "creativity_requirement": 0.8784211432920057,
+      "teamwork_requirement": 0.7472901133483816,
+      "exploration_requirement": 0.2675174692691572,
+      "salary_inr_avg": 0.31219024116299077,
+      "work_life_balance_score": -0.21679185454408412,
+      "stress_level": 0.4335621853528388,
+      "growth_trajectory_5yr": -0.20585669146167823,
+      "automation_risk_level": 0.5714707974287372,
+      "industry_stability": -0.3276690818638955,
+      "job_security_score": -0.5517560637171051,
+      "entry_difficulty_enc": 0.793336359752604,
+      "remote_work_feasibility_enc": -2.0
+    },
+    "size": 13,
+    "top_jobs": [
+      "Cloud Architect",
+      "UX Designer",
+      "Game Developer",
+      "Blockchain Developer",
+      "QA Engineer"
+    ],
+    "primary_categories": {
+      "Technology": 13
+    }
+  },
+  "C0.1.0.0.0": {
+    "centroid": {
+      "verbal_aptitude_weight": 1.7605958486142261,
+      "quantitative_aptitude_weight": -1.2924391095397068,
+      "creativity_requirement": 0.03187618502540996,
+      "teamwork_requirement": -0.3012876977707851,
+      "exploration_requirement": -0.45072652803465335,
+      "salary_inr_avg": 0.31219024116299077,
+      "work_life_balance_score": -0.21023987634824026,
+      "stress_level": -0.14072790913532343,
+      "growth_trajectory_5yr": 0.40029835688024495,
+      "automation_risk_level": -0.6711261915327833,
+      "industry_stability": -0.7194238383799321,
+      "job_security_score": -0.5917152224451692,
+      "entry_difficulty_enc": -0.35232437043719117,
+      "remote_work_feasibility_enc": 0.49999999999999994
+    },
+    "size": 13,
+    "top_jobs": [
+      "Judge",
+      "Patent Attorney",
+      "Tax Attorney",
+      "Legal Consultant",
+      "Intellectual Property Lawyer"
+    ],
+    "primary_categories": {
+      "Law": 13
+    }
+  },
+  "C0.1.0.0.1": {
+    "centroid": {
+      "verbal_aptitude_weight": 1.5007183521176766,
+      "quantitative_aptitude_weight": -1.2770569775936935,
+      "creativity_requirement": -0.826783378228596,
+      "teamwork_requirement": -0.1636732974284443,
+      "exploration_requirement": 0.45078164508000956,
+      "salary_inr_avg": 0.17028558608890407,
+      "work_life_balance_score": 0.5982742330189023,
+      "stress_level": 0.2739775235822965,
+      "growth_trajectory_5yr": 0.10562475225856663,
+      "automation_risk_level": 0.9426284745586435,
+      "industry_stability": 0.513027619763047,
+      "job_security_score": 0.8632421459088871,
+      "entry_difficulty_enc": -0.4287017524498442,
+      "remote_work_feasibility_enc": 0.49999999999999994
+    },
+    "size": 15,
+    "top_jobs": [
+      "Corporate Lawyer",
+      "Legal Secretary",
+      "Legal Advisor",
+      "Compliance Officer",
+      "Contract Manager"
+    ],
+    "primary_categories": {
+      "Law": 13,
+      "Commerce": 2
+    }
+  },
+  "C0.1.0.1.0": {
+    "centroid": {
+      "verbal_aptitude_weight": 0.6913492392815341,
+      "quantitative_aptitude_weight": -0.11709387719865812,
+      "creativity_requirement": -0.44046677598198,
+      "teamwork_requirement": -0.08142882488342049,
+      "exploration_requirement": -0.7602677916893962,
+      "salary_inr_avg": -0.3466528002524119,
+      "work_life_balance_score": -0.3784073167082348,
+      "stress_level": 0.3962473861560111,
+      "growth_trajectory_5yr": -0.8401099510626033,
+      "automation_risk_level": 0.8791193656159567,
+      "industry_stability": 0.5397878789930423,
+      "job_security_score": -0.26062505012692616,
+      "entry_difficulty_enc": 0.43070425187740274,
+      "remote_work_feasibility_enc": 0.4999999999999999
+    },
+    "size": 21,
+    "top_jobs": [
+      "Law Clerk",
+      "Paralegal",
+      "Securities Lawyer",
+      "Legal Researcher",
+      "Lawyer"
+    ],
+    "primary_categories": {
+      "Law": 8,
+      "Commerce": 5,
+      "Science": 5,
+      "Engineering": 3
+    }
+  },
+  "C0.1.0.1.1": {
+    "centroid": {
+      "verbal_aptitude_weight": 0.011298099970037742,
+      "quantitative_aptitude_weight": -0.13776723122384518,
+      "creativity_requirement": 0.3140578377809419,
+      "teamwork_requirement": -1.0831461092902686,
+      "exploration_requirement": 0.6623794270195135,
+      "salary_inr_avg": -0.9442572256388188,
+      "work_life_balance_score": 0.8637385495871794,
+      "stress_level": 0.07395997665464386,
+      "growth_trajectory_5yr": -0.8857695443584815,
+      "automation_risk_level": 0.7059749198993645,
+      "industry_stability": 0.2481428662911407,
+      "job_security_score": 0.8112952395624043,
+      "entry_difficulty_enc": 0.6080088886924901,
+      "remote_work_feasibility_enc": 0.49999999999999994
+    },
+    "size": 12,
+    "top_jobs": [
+      "Consulting Engineer",
+      "Accountant",
+      "Business Development Manager",
+      "Market Research Analyst",
+      "Customer Success Manager"
+    ],
+    "primary_categories": {
+      "Science": 6,
+      "Commerce": 5,
+      "Engineering": 1
+    }
+  },
+  "C0.1.1": {
+    "centroid": {
+      "verbal_aptitude_weight": 0.7787422076908842,
+      "quantitative_aptitude_weight": -2.732085221802761,
+      "creativity_requirement": -0.24291851346950594,
+      "teamwork_requirement": 0.06708702016689086,
+      "exploration_requirement": 0.04325999097429835,
+      "salary_inr_avg": -1.8163795849483104,
+      "work_life_balance_score": 0.22350108021662876,
+      "stress_level": -0.29583990661857473,
+      "growth_trajectory_5yr": -0.38019332040957643,
+      "automation_risk_level": -0.20327294800207554,
+      "industry_stability": -0.11625660119231045,
+      "job_security_score": 0.4938419230005642,
+      "entry_difficulty_enc": -0.13667058593087678,
+      "remote_work_feasibility_enc": -2.0
+    },
+    "size": 10,
+    "top_jobs": [
+      "Graphic Designer",
+      "Artist",
+      "Writer",
+      "Journalist",
+      "Photographer"
+    ],
+    "primary_categories": {
+      "Arts": 10
+    }
+  }
+}
