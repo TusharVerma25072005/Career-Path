@@ -1,73 +1,70 @@
-# Welcome to your Lovable project
+# Career Path Project
 
-## Project info
+This repository contains the codebase for a Career Path recommendation and guidance system. The project is divided into two main components:
 
-**URL**: https://lovable.dev/projects/698d7d76-ebae-4e42-b6f1-2fdb279c284d
+1.  **`ml_backend`**: A Python-based Machine Learning backend responsible for career clustering and initial recommendations.
+2.  **`Cloud & backend`**: A Python Flask application deployed on Google Cloud Run that acts as an orchestration layer, integrating the ML backend with the Google Gemini API for detailed career guidance and chat functionalities.
+3.  **`webapp`**: A React/Vite frontend application for user interaction, assessment, and displaying career recommendations and chat.
 
-## How can I edit this code?
+## Architecture
 
-There are several ways of editing your application.
+The overall architecture involves:
 
-**Use Lovable**
+-   **Users:** Interact with the `webapp`.
+-   **Web Application (`webapp`):** A React/Vite frontend that collects user assessment data and handles chat interactions.
+-   **Cloud & Backend Service (`Cloud & backend`):**
+    -   Deployed on Google Cloud Run.
+    -   Receives assessment data and chat queries from the `webapp`.
+    -   Calls the `ml_backend` (deployed on Vertex AI) for career clustering.
+    -   Calls the Google Gemini API for detailed career guidance and chat responses.
+    -   Returns combined responses to the `webapp`.
+-   **ML Backend (`ml_backend`):**
+    -   Deployed as a Vertex AI endpoint.
+    -   Processes assessment data to determine career clusters and provides initial recommendations.
+-   **Google Gemini API:** Provides advanced natural language capabilities for personalized career guidance and conversational AI.
+-   **Relational DB (e.g., Supabase):** Stores user data, assessment results, and chat history (managed by `webapp`'s Supabase Edge Functions or directly by the `Cloud & backend` in a more integrated setup).
+-   **Auth & IAM:** Handles user authentication and authorization.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/698d7d76-ebae-4e42-b6f1-2fdb279c284d) and start prompting.
+## Project Setup
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+-   Node.js and npm/bun (for `webapp`)
+-   Python 3.9+ and pip (for `ml_backend` and `Cloud & backend`)
+-   Docker
+-   Google Cloud SDK
+-   Google Cloud Project with billing enabled
+-   Google Gemini API Key
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Getting Started
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/topspeed69/Career-Path.git
+    cd Career-Path
+    ```
 
-Follow these steps:
+2.  **ML Backend Setup (`ml_backend` folder):**
+    Refer to the `ml_backend/README.md` (if it exists, otherwise create one) for instructions on how to set up and deploy the ML model to Google Cloud Vertex AI. Ensure you obtain the endpoint URL for the deployed model.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3.  **Cloud & Backend Service Setup (`Cloud & backend` folder):**
+    Refer to the `Cloud & backend/README.md` for instructions on how to set up, run locally, and deploy this Flask application to Google Cloud Run. You will need the Vertex AI endpoint URL and your Gemini API key.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4.  **Web Application Setup (`webapp` folder):**
+    Refer to the `webapp/README.md` for instructions on how to set up and run the frontend application. This will involve configuring API endpoints to point to your deployed Cloud Run service.
 
-# Step 3: Install the necessary dependencies.
-npm i
+## Development
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Each sub-project (`ml_backend`, `Cloud & backend`, `webapp`) has its own `README.md` with specific development instructions.
 
-**Edit a file directly in GitHub**
+## Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Deployment instructions for each component are provided in their respective `README.md` files.
 
-**Use GitHub Codespaces**
+## Contributing
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Feel free to contribute to this project by submitting issues or pull requests.
 
-## What technologies are used for this project?
+## License
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/698d7d76-ebae-4e42-b6f1-2fdb279c284d) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+[Specify your license here, e.g., MIT License]
