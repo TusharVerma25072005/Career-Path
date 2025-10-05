@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Path Prediction</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        form { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+        div { margin-bottom: 1em; }
+        label { display: block; margin-bottom: .5em; }
+        input, select { width: 100%; padding: .5em; box-sizing: border-box; }
+        button { grid-column: span 2; padding: 1em; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        #response { margin-top: 2em; white-space: pre-wrap; background: #f4f4f4; padding: 1em; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>Career Path Questionnaire</h1>
+    <form id="questionnaireForm">
+        <!-- Part 1 -->
+        <div><label for="age">What is your age in years?</label><input type="number" id="age" name="1" required></div>
+        <div><label for="grade">What is your current grade level?</label><select id="grade" name="2" required><option>Below 10</option><option>10th</option><option>12th</option></select></div>
+        <div><label for="stream">Which academic stream are you currently enrolled in?</label><select id="stream" name="3" required><option>Arts</option><option>Commerce</option><option>Science</option><option>Unknown</option></select></div>
+        <div><label>Do you have a disability?</label><div><input type="checkbox" name="4" value="Hearing"> Hearing <input type="checkbox" name="4" value="Learning"> Learning <input type="checkbox" name="4" value="Physical"> Physical <input type="checkbox" name="4" value="Visual"> Visual <input type="checkbox" name="4" value="Unknown"> Prefer not to say</div></div>
+        <div><label>Which types of hobbies do you participate in?</label><div><input type="checkbox" name="5" value="Creative Hobbies"> Creative <input type="checkbox" name="5" value="Technical Hobbies"> Technical <input type="checkbox" name="5" value="Sports"> Sports</div></div>
+        <!-- Part 2 -->
+        <div><label for="income">Family's annual income bracket?</label><select id="income" name="6" required><option>Low</option><option>Lower-Middle</option><option>Middle</option><option>Upper-Middle</option><option>High</option></select></div>
+        <div><label for="parent_expectation">Which field do your parents expect you to pursue?</label><select id="parent_expectation" name="7" required><option>Arts</option><option>Commerce</option><option>Engineering</option><option>Law</option><option>Medicine</option><option>Science</option><option>Technology</option></select></div>
+        <div><label for="parent_interest">Parents' level of interest in your career (0-10)?</label><input type="number" id="parent_interest" name="8" min="0" max="10" required></div>
+        <!-- Part 3 -->
+        <div><label for="verbal_aptitude">Verbal aptitude (0-10)?</label><input type="number" id="verbal_aptitude" name="9" min="0" max="10" required></div>
+        <div><label for="quantitative_aptitude">Quantitative aptitude (0-10)?</label><input type="number" id="quantitative_aptitude" name="10" min="0" max="10" required></div>
+        <div><label for="creativity">Creativity (0-10)?</label><input type="number" id="creativity" name="11" min="0" max="10" required></div>
+        <div><label for="teamwork">Teamwork ability (0-10)?</label><input type="number" id="teamwork" name="12" min="0" max="10" required></div>
+        <div><label for="exploration_willingness">Willingness to explore new ideas (0-10)?</label><input type="number" id="exploration_willingness" name="13" min="0" max="10" required></div>
+        <!-- Part 4 -->
+        <div><label for="career_interest">Primary field of interest for your future career?</label><select id="career_interest" name="14" required><option>Arts</option><option>Commerce</option><option>Engineering</option><option>Law</option><option>Medicine</option><option>Science</option><option>Technology</option></select></div>
+        <div><label for="expected_salary">Expected annual salary for your first job?</label><input type="number" id="expected_salary" name="15" required></div>
+        <div><label for="work_arrangement">Preferred work arrangement?</label><select id="work_arrangement" name="16" required><option>On-site</option><option>Remote</option><option>Hybrid</option></select></div>
+        <div><label for="work_abroad">Comfortable with studying or working outside of India?</label><select id="work_abroad" name="17" required><option>Yes</option><option>No</option></select></div>
+        <!-- Part 5 -->
+        <div><label for="math_score">Most recent score in Mathematics (out of 100)?</label><input type="number" id="math_score" name="18" min="0" max="100" required></div>
+        <div><label for="english_score">Most recent score in English (out of 100)?</label><input type="number" id="english_score" name="19" min="0" max="100" required></div>
+        <div><label for="science_score">Most recent score in Science (out of 100)?</label><input type="number" id="science_score" name="20" min="0" max="100" required></div>
+        <div><label for="psychometric_test">Have you ever taken a formal psychometric or career aptitude test?</label><select id="psychometric_test" name="21" required><option>Yes</option><option>No</option></select></div>
+        <div><label for="psychometric_score">If yes, what was your overall score?</label><input type="number" id="psychometric_score" name="22"></div>
+        
+        <button type="submit">Get Career Prediction</button>
+    </form>
+
+    <h2>Response</h2>
+    <pre id="response">The server response will be shown here.</pre>
+
+    <script>
+        document.getElementById('questionnaireForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {};
+
+            for (let [key, value] of formData.entries()) {
+                // For checkboxes, we want to collect all values in an array
+                if (document.querySelector(`[name="${key}"][type="checkbox"]`)) {
+                    if (!data[key]) {
+                        data[key] = [];
+                    }
+                    data[key].push(value);
+                } else {
+                    // For other inputs, just set the value. Convert numbers where appropriate.
+                    const inputElement = document.querySelector(`[name="${key}"]`);
+                    if (inputElement.type === 'number' && value !== '') {
+                        data[key] = Number(value);
+                    } else {
+                        data[key] = value;
+                    }
+                }
+            }
+            
+            // Handle empty optional number field
+            if (!data['22']) {
+                data['22'] = null;
+            }
+
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = 'Loading...';
+
+            try {
+                const response = await fetch('http://localhost:8080/predict_from_questionnaire', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                responseDiv.textContent = JSON.stringify(result, null, 2);
+
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        });
+    </script>
+</body>
+</html>
