@@ -1,72 +1,70 @@
-# Career Pathfinder
+# Career Path Project
 
-An AI-powered career assessment and guidance platform that helps users discover their ideal career paths through personalized assessments and intelligent recommendations.
+This repository contains the codebase for a Career Path recommendation and guidance system. The project is divided into two main components:
 
-## Project Features
+1.  **`ml_backend`**: A Python-based Machine Learning backend responsible for career clustering and initial recommendations.
+2.  **`Cloud & backend`**: A Python Flask application deployed on Google Cloud Run that acts as an orchestration layer, integrating the ML backend with the Google Gemini API for detailed career guidance and chat functionalities.
+3.  **`webapp`**: A React/Vite frontend application for user interaction, assessment, and displaying career recommendations and chat.
 
-- **Interactive Career Assessment**: Comprehensive questionnaire to evaluate interests, skills, and preferences
-- **AI-Powered Recommendations**: Get personalized career suggestions based on your assessment results
-- **Assessment-Specific Chat**: Discuss your results with an AI career counselor
-- **Assessment Tracking**: Limited free assessments with upgrade options
-- **User Authentication**: Secure login and user management
+## Architecture
 
-## How to run this project locally
+The overall architecture involves:
 
-Follow these steps to set up the project locally:
+-   **Users:** Interact with the `webapp`.
+-   **Web Application (`webapp`):** A React/Vite frontend that collects user assessment data and handles chat interactions.
+-   **Cloud & Backend Service (`Cloud & backend`):**
+    -   Deployed on Google Cloud Run.
+    -   Receives assessment data and chat queries from the `webapp`.
+    -   Calls the `ml_backend` (deployed on Vertex AI) for career clustering.
+    -   Calls the Google Gemini API for detailed career guidance and chat responses.
+    -   Returns combined responses to the `webapp`.
+-   **ML Backend (`ml_backend`):**
+    -   Deployed as a Vertex AI endpoint.
+    -   Processes assessment data to determine career clusters and provides initial recommendations.
+-   **Google Gemini API:** Provides advanced natural language capabilities for personalized career guidance and conversational AI.
+-   **Relational DB (e.g., Supabase):** Stores user data, assessment results, and chat history (managed by `webapp`'s Supabase Edge Functions or directly by the `Cloud & backend` in a more integrated setup).
+-   **Auth & IAM:** Handles user authentication and authorization.
 
-```sh
-# Step 1: Clone the repository
-git clone <YOUR_GIT_URL>
+## Project Setup
 
-# Step 2: Navigate to the project directory
-cd pathfinder-quest-14
+### Prerequisites
 
-# Step 3: Install the necessary dependencies
-npm install
+-   Node.js and npm/bun (for `webapp`)
+-   Python 3.9+ and pip (for `ml_backend` and `Cloud & backend`)
+-   Docker
+-   Google Cloud SDK
+-   Google Cloud Project with billing enabled
+-   Google Gemini API Key
 
-# Step 4: Set up environment variables
-# Create a .env file and add your Supabase credentials
+### Getting Started
 
-# Step 5: Start the development server
-npm run dev
-```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/topspeed69/Career-Path.git
+    cd Career-Path
+    ```
 
-## Technologies Used
+2.  **ML Backend Setup (`ml_backend` folder):**
+    Refer to the `ml_backend/README.md` (if it exists, otherwise create one) for instructions on how to set up and deploy the ML model to Google Cloud Vertex AI. Ensure you obtain the endpoint URL for the deployed model.
 
-This project is built with:
+3.  **Cloud & Backend Service Setup (`Cloud & backend` folder):**
+    Refer to the `Cloud & backend/README.md` for instructions on how to set up, run locally, and deploy this Flask application to Google Cloud Run. You will need the Vertex AI endpoint URL and your Gemini API key.
 
-- **Frontend**: React + TypeScript + Vite
-- **UI Components**: shadcn-ui + Tailwind CSS
-- **Backend**: Supabase (Database + Authentication + Edge Functions)
-- **AI Integration**: Google Gemini API
-- **Routing**: React Router
+4.  **Web Application Setup (`webapp` folder):**
+    Refer to the `webapp/README.md` for instructions on how to set up and run the frontend application. This will involve configuring API endpoints to point to your deployed Cloud Run service.
 
-## Project Structure
+## Development
 
-- `/src/components` - Reusable UI components
-- `/src/pages` - Main application pages
-- `/src/hooks` - Custom React hooks
-- `/src/lib` - Utility functions and configurations
-- `/supabase/functions` - Edge Functions for AI interactions
-
-## Database Setup
-
-Run the provided SQL migration scripts in your Supabase dashboard:
-- `SIMPLE_SETUP.sql` - Basic user assessment usage tracking
-- `MIGRATION_FOR_ASSESSMENT_CHATS.sql` - Assessment-specific chat sessions
+Each sub-project (`ml_backend`, `Cloud & backend`, `webapp`) has its own `README.md` with specific development instructions.
 
 ## Deployment
 
-This project can be deployed to any hosting platform that supports Node.js applications. Popular options include:
+Deployment instructions for each component are provided in their respective `README.md` files.
 
-- Vercel
-- Netlify
-- Railway
-- Heroku
+## Contributing
 
-## Environment Variables
+Feel free to contribute to this project by submitting issues or pull requests.
 
-Required environment variables:
-- `VITE_SUPABASE_URL` - Your Supabase project URL
-- `VITE_SUPABASE_ANON_KEY` - Your Supabase anonymous key
-- `GEMINI_API_KEY` - Google Gemini API key (for Edge Functions)
+## License
+
+[Specify your license here, e.g., MIT License]
