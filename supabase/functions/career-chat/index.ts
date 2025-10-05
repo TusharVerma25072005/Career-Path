@@ -1,221 +1,137 @@
-
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
-Deno.serve(async (req : any) => {
-  console.log('Career chat function called with method:', req.method);
-  
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
+
+serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    console.log('Starting chat function processing...');
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    )
+    const body = await req.json();
+    const sessionId = body?.sessionId;
+    const message = body?.message;
 
-    // Get request data
-    const { message, assessmentData, userId, assessmentId } = await req.json()
+    if (!sessionId || !message)
+      return new Response(JSON.stringify({ error: "Missing sessionId or message" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
 
-    if (!message || !userId) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: message, userId' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
+    const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
-    console.log('Processing chat request for user:', userId, 'assessmentId:', assessmentId);
+    const authHeader = req.headers.get("Authorization") ?? "";
 
-    // Store user message in database - try assessment_chat_messages first, fallback to chat_messages
-    let userMessageError;
-    if (assessmentId) {
-      // Try to store in assessment-specific table
-      const { error } = await supabaseClient
-        .from('assessment_chat_messages')
-        .insert({
-          user_id: userId,
-          assessment_id: assessmentId,
-          content: message,
-          is_user: true
-        });
-      userMessageError = error;
-      
-      if (userMessageError) {
-        console.log('assessment_chat_messages failed, trying chat_messages:', userMessageError.message);
-        // Fallback to general chat table
-        const { error: fallbackError } = await supabaseClient
-          .from('chat_messages')
-          .insert({
-            user_id: userId,
-            content: message,
-            is_user: true
-          });
-        userMessageError = fallbackError;
-      }
-    } else {
-      // No assessment ID, use general chat table
-      const { error } = await supabaseClient
-        .from('chat_messages')
-        .insert({
-          user_id: userId,
-          content: message,
-          is_user: true
-        });
-      userMessageError = error;
-    }
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
 
-    if (userMessageError) {
-      console.error('Error storing user message:', userMessageError)
-      throw new Error('Failed to store user message')
-    }
+    // Fetch session with assessment
+    const { data: session, error: sessionError } = await supabase
+      .from("chat_sessions")
+      .select(`*, assessment:assessments(*)`)
+      .eq("id", sessionId)
+      .single();
 
-    // 2. Prepare system prompt with assessment data
-    const systemPrompt = `You are a career guidance counselor. ${
-      assessmentData 
-        ? `The user completed a career assessment with these results: ${assessmentData}.` 
-        : 'The user has not completed a career assessment yet.'
-    } 
-    
-    Provide helpful, personalized career advice based on their assessment results (if available), current job market trends, and skill development recommendations. 
-    Keep responses conversational, encouraging, and actionable. Limit responses to 200 words and provide response in purely markdown format.`
+    if (sessionError) throw sessionError;
 
-    // 3. Call Google Gemini API
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
-    if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY not configured')
-    }
+    // Fetch chat history
+    const { data: messages, error: messagesError } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true });
 
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `${systemPrompt}\n\nUser: ${message}`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 1,
-          topP: 1,
-          maxOutputTokens: 300,
+    if (messagesError) throw messagesError;
+
+    const assessment = session.assessment as any;
+
+    // Construct system prompt
+    const systemPrompt = `You are a helpful career guidance AI assistant. You're chatting with a student about their career assessment results.
+
+Career Recommendation:
+- Primary Career: ${assessment.career_details.primaryCareer}
+- Career Cluster: ${assessment.career_cluster}
+- Description: ${assessment.career_details.description}
+- Salary Range: ${assessment.career_details.salaryRange}
+- Growth Outlook: ${assessment.career_details.growthOutlook}
+- Education Required: ${assessment.career_details.educationRequired}
+
+Key Skills Needed:
+${assessment.career_details.keySkills?.join(", ") || "N/A"}
+
+Student Assessment Summary:
+- Academic Stream: ${assessment.responses?.academicStream || "N/A"}
+- Field of Interest: ${assessment.responses?.fieldOfInterest || "N/A"}
+- Verbal Aptitude: ${assessment.responses?.verbalAptitude || "N/A"}/10
+- Quantitative Aptitude: ${assessment.responses?.quantitativeAptitude || "N/A"}/10
+- Creativity: ${assessment.responses?.creativity || "N/A"}/10
+
+Guidelines:
+- Provide personalized career guidance based on their assessment
+- Answer questions about the recommended career path
+- Suggest specific skills to develop, courses to take, and actionable steps
+- Be realistic and concise (2-4 paragraphs max)
+- Reference alternative careers if asked
+- Help with education planning, skill development, and career roadmap`;
+
+    // Build conversation history for Gemini
+    const conversationHistory = messages.map((msg: { role: string; content: string }) => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: [{ text: msg.content }],
+    }));
+
+    // Add the current user message
+    conversationHistory.push({ role: "user", parts: [{ text: message }] });
+
+    // Call Google GenAI REST API
+    const genaiResponseRaw = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-exp:generateContent",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GEMINI_API_KEY}`,
+          "Content-Type": "application/json",
         },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
-      }),
-    })
-
-    if (!geminiResponse.ok) {
-      const errorData = await geminiResponse.text()
-      console.error('Gemini API error:', errorData)
-      throw new Error('Failed to get AI response from Gemini')
-    }
-
-    const geminiData = await geminiResponse.json()
-    const aiResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text
-
-    if (!aiResponse) {
-      console.error('Gemini response structure:', JSON.stringify(geminiData, null, 2))
-      throw new Error('No response from Gemini AI')
-    }
-
-    // Store AI response in database - try assessment_chat_messages first, fallback to chat_messages
-    let aiMessageError;
-    if (assessmentId) {
-      // Try to store in assessment-specific table
-      const { error } = await supabaseClient
-        .from('assessment_chat_messages')
-        .insert({
-          user_id: userId,
-          assessment_id: assessmentId,
-          content: aiResponse,
-          is_user: false
-        });
-      aiMessageError = error;
-      
-      if (aiMessageError) {
-        console.log('assessment_chat_messages failed for AI response, trying chat_messages:', aiMessageError.message);
-        // Fallback to general chat table
-        const { error: fallbackError } = await supabaseClient
-          .from('chat_messages')
-          .insert({
-            user_id: userId,
-            content: aiResponse,
-            is_user: false
-          });
-        aiMessageError = fallbackError;
+        body: JSON.stringify({
+          prompt: systemPrompt + "\n\nUser Message:\n" + message,
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        }),
       }
-    } else {
-      // No assessment ID, use general chat table
-      const { error } = await supabaseClient
-        .from('chat_messages')
-        .insert({
-          user_id: userId,
-          content: aiResponse,
-          is_user: false
-        });
-      aiMessageError = error;
-    }
+    );
 
-    if (aiMessageError) {
-      console.error('Error storing AI message:', aiMessageError)
-      throw new Error('Failed to store AI response')
-    }
+    const genaiData = await genaiResponseRaw.json();
+    const assistantMessage = genaiData?.candidates?.[0]?.content;
+    if (!assistantMessage) throw new Error("No response generated from Gemini API");
 
-    // Return success response
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Chat message processed successfully',
-        aiResponse: aiResponse
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    )
+    // Save messages in Supabase
+    const { error: insertError } = await supabase.from("chat_messages").insert([
+      { session_id: sessionId, role: "user", content: message },
+      { session_id: sessionId, role: "assistant", content: assistantMessage },
+    ]);
 
+    if (insertError) throw insertError;
+
+    return new Response(JSON.stringify({ message: assistantMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error('Function error:', error)
-    
+    console.error("Error in career-chat:", error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Internal server error',
-        success: false 
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    )
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
-})
+});

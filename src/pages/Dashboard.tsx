@@ -1,429 +1,246 @@
-import { useState, useEffect } from 'react';
-import { Header } from '@/components/Header';
-import { CareerAssessment } from '@/components/CareerAssessment';
-import { CareerRecommendation } from '@/components/CareerRecommendation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/components/AuthProvider';
-import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
-import { Briefcase, Clock, Play, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Briefcase, Clock, LogOut, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
-type AssessmentState = 'idle' | 'taking' | 'completed';
-
-interface SavedAssessment {
+interface Assessment {
   id: string;
-  answers: Record<string, string>;
-  recommendation: string;
-  created_at: string;
+  primary_career: string;
+  completed_at: string;
 }
 
-interface UsageData {
-  assessment_count: number;
-  limit_exceeded: boolean;
-  remaining: number;
-}
-
-export function Dashboard() {
-  const [assessmentState, setAssessmentState] = useState<AssessmentState>('idle');
-  const [currentRecommendation, setCurrentRecommendation] = useState<string>('');
-  const [currentAssessmentId, setCurrentAssessmentId] = useState<string>('');
-  const [savedAssessments, setSavedAssessments] = useState<SavedAssessment[]>([]);
-  const [usageData, setUsageData] = useState<UsageData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+const Dashboard = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [todayAssessmentCount, setTodayAssessmentCount] = useState(0);
+  const [remainingAssessments, setRemainingAssessments] = useState(3);
 
   useEffect(() => {
-    if (user) {
-      loadSavedAssessments();
-      loadUsageData();
-    }
-  }, [user]);
-
-  const loadUsageData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_assessment_usage')
-        .select('*')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { 
-        console.error('Error loading usage data:', error);
-        throw error;
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/auth');
+        return;
       }
+      setUser(session.user);
+      loadAssessments(session.user.id);
+    };
 
-      if (data) {
-        setUsageData({
-          assessment_count: data.assessment_count,
-          limit_exceeded: data.assessment_count >= 5,
-          remaining: Math.max(0, 5 - data.assessment_count)
-        });
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate('/auth');
       } else {
-        // console.log('No usage data found, setting defaults');
-        setUsageData({
-          assessment_count: 0,
-          limit_exceeded: false,
-          remaining: 5
-        });
+        setUser(session.user);
       }
-    } catch (error) {
-      setUsageData({
-        assessment_count: 0,
-        limit_exceeded: false,
-        remaining: 5
-      });
-    }
-  };
+    });
 
-  const loadSavedAssessments = async () => {
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const loadAssessments = async (userId: string) => {
     try {
-      
       const { data, error } = await supabase
-        .from('career_assessments')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+        .from('assessments')
+        .select('id, primary_career, completed_at')
+        .eq('user_id', userId)
+        .order('completed_at', { ascending: false })
+        .limit(10);
 
-      if (error) {
-        console.error('Supabase error details:', error);
-        throw error;
-      }
+      if (error) throw error;
+      setAssessments(data || []);
+
+      // Count today's assessments
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       
-      setSavedAssessments(data || []);
+      const { data: todayData, error: todayError } = await supabase
+        .from('assessments')
+        .select('id')
+        .eq('user_id', userId)
+        .gte('created_at', today.toISOString());
+
+      if (todayError) throw todayError;
+      
+      const count = todayData?.length || 0;
+      setTodayAssessmentCount(count);
+      setRemainingAssessments(Math.max(0, 3 - count));
     } catch (error) {
-      
-      let errorMessage = "Please try again later.";
-      if (error && typeof error === 'object' && 'message' in error) {
-        errorMessage = (error as any).message;
-      }
-      
-      toast({
-        title: "Error loading assessments",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      console.error('Error loading assessments:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAssessmentComplete = async (answers: Record<string, string>) => {
-    try {
-      console.log('Assessment completed with answers:', JSON.stringify(answers));
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const { data: currentUsage } = await supabase
-        .from('user_assessment_usage')
-        .select('assessment_count')
-        .eq('user_id', user?.id)
-        .single();
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully",
+    });
+  };
 
-      const currentCount = currentUsage?.assessment_count || 0;
-      
-      if (currentCount >= 5) {
-        toast({
-          title: "Assessment limit reached",
-          description: "You have reached your limit of 5 free career assessments. Please upgrade to continue.",
-          variant: "destructive"
-        });
-        await loadUsageData(); // Refresh usage data
-        return;
-      }
-      
-
-      const { generateCareerRecommendation } = await import('@/utils/careerRecommendations');
-      
-      // console.log("success");
-      // return;
-      
-      
-      
-      //change hreerr for recommendation generate --------------->>>>>>>>>>>>>>>>
-      
-      
-      const recommendation = generateCareerRecommendation(answers);
-      
-
-      const { data, error } = await supabase
-        .from('career_assessments')
-        .insert({
-          user_id: user?.id,
-          answers,
-          recommendation: JSON.stringify(recommendation)
-        })
-        .select();
-
-      if (error) {
-        console.error('Supabase error details:', error);
-        throw error;
-      }
-
-      // console.log('Successfully saved assessment:', data);
-
-      const newAssessmentId = data?.[0]?.id || '';
-      console.log('New assessment ID:', newAssessmentId);
-
-      const newCount = currentCount + 1;
-      // console.log('Incrementing usage count from', currentCount, 'to', newCount);
-      
-      const { data: insertResult, error: insertError } = await supabase
-        .from('user_assessment_usage')
-        .insert({
-          user_id: user?.id,
-          assessment_count: newCount,
-          last_assessment_at: new Date().toISOString()
-        })
-        .select();
-
-      if (insertError) {
-        console.log('Insert failed, trying update:', insertError);
-        const { data: updateResult, error: updateError } = await supabase
-          .from('user_assessment_usage')
-          .update({
-            assessment_count: newCount,
-            last_assessment_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user?.id)
-          .select();
-
-        if (updateError) {
-          console.error('Error updating usage count:', updateError);
-        } else {
-          console.log('Usage count updated successfully:', updateResult);
-        }
-      } else {
-        console.log('Usage count inserted successfully:', insertResult);
-      }
-
-      setCurrentRecommendation(JSON.stringify(recommendation));
-      setCurrentAssessmentId(newAssessmentId);
-      setAssessmentState('completed');
-      
-      await loadSavedAssessments();
-      await loadUsageData();
-
+  const handleStartAssessment = () => {
+    if (remainingAssessments <= 0) {
       toast({
-        title: "Assessment completed!",
-        description: "Your career recommendation has been generated and saved."
+        title: "Assessment Limit Reached",
+        description: "You've used all 3 assessments for today. Come back tomorrow or upgrade to Pro for unlimited assessments!",
+        variant: "destructive",
       });
-    } catch (error) {
-      console.error('Error saving assessment:', error);
-      
-      // More detailed error handling
-      let errorMessage = "Please try again later.";
-      if (error && typeof error === 'object' && 'message' in error) {
-        errorMessage = (error as any).message;
-      }
-      
-      toast({
-        title: "Error generating assessment",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      return;
     }
+    navigate('/assessment');
   };
-
-  const handleStartNewAssessment = () => {
-    setAssessmentState('taking');
-    setCurrentRecommendation('');
-  };
-
-  const handleViewRecommendation = (recommendation: string, assessmentId: string) => {
-    setCurrentRecommendation(recommendation);
-    setCurrentAssessmentId(assessmentId);
-    setAssessmentState('completed');
-  };
-
-  const handleBackToDashboard = () => {
-    setAssessmentState('idle');
-    setCurrentRecommendation('');
-    setCurrentAssessmentId('');
-  };
-
-  if (assessmentState === 'taking') {
-    return <CareerAssessment onComplete={handleAssessmentComplete} />;
-  }
-
-  if (assessmentState === 'completed') {
-    return (
-      <CareerRecommendation 
-        recommendation={currentRecommendation}
-        assessmentId={currentAssessmentId}
-        onStartNew={handleBackToDashboard}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
-      <div className="container mx-auto p-4">
-        <div className="mb-12 text-center md:text-left max-w-3xl">
-  <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-black leading-snug">
-    Ready to Explore Your Career Path?
-  </h1>
-  <p className="text-lg md:text-xl text-gray-700">
-    Take a new personalized assessment, review your previous results, and get AI-powered guidance to discover the career path that fits you best.
-  </p>
-</div>
+      {/* Header */}
+      <header className="border-b">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Career Path Advisor</h1>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
+              <User className="h-4 w-4 mr-2" />
+              Profile
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </header>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="md:col-span-2 lg:col-span-1">
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-12">
+        <div className="mb-8">
+          <h2 className="text-4xl font-bold mb-2">Ready to Explore Your Career Path?</h2>
+          <p className="text-lg text-muted-foreground">
+            Take a new personalized assessment, review your previous results, and get AI-powered guidance to discover the career path that fits you best.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Start New Assessment */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-2">
                 <Briefcase className="h-5 w-5" />
-                Start New Assessment
-              </CardTitle>
+                <CardTitle>Start New Assessment</CardTitle>
+              </div>
               <CardDescription>
                 Take our comprehensive career assessment to get personalized recommendations
               </CardDescription>
-              {usageData && (
-                <div className="flex items-center gap-2 mt-2">
-                  {usageData.limit_exceeded ? (
-                    <Badge variant="destructive" className="flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      Limit Reached
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">
-                      {usageData.remaining} assessments remaining
-                    </Badge>
-                  )}
-                </div>
-              )}
+              <p className={`text-sm mt-2 ${remainingAssessments > 0 ? 'text-muted-foreground' : 'text-destructive font-medium'}`}>
+                {remainingAssessments > 0 
+                  ? `${remainingAssessments} assessment${remainingAssessments !== 1 ? 's' : ''} remaining today`
+                  : 'Daily limit reached. Upgrade to Pro for unlimited assessments!'}
+              </p>
             </CardHeader>
             <CardContent>
               <Button 
-                onClick={handleStartNewAssessment} 
                 className="w-full" 
                 size="lg"
-                disabled={usageData?.limit_exceeded}
+                onClick={handleStartAssessment}
+                disabled={remainingAssessments <= 0}
               >
-                <Play className="mr-2 h-4 w-4" />
-                {usageData?.limit_exceeded ? 'Upgrade to Continue' : 'Begin Assessment'}
+                {remainingAssessments > 0 ? 'Begin Assessment' : 'Limit Reached'}
               </Button>
-              {usageData?.limit_exceeded && (
-                <p className="text-sm text-muted-foreground mt-2 text-center">
-                  You've used all 5 free assessments. Upgrade to continue.
-                </p>
+              {remainingAssessments <= 0 && (
+                <div className="mt-4 p-4 border rounded-lg bg-accent/50">
+                  <p className="text-sm font-medium mb-2">Want unlimited assessments?</p>
+                  <Button variant="default" className="w-full" size="sm">
+                    Upgrade to Pro
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>
 
-          {loading ? (
-            <Card className="md:col-span-2">
-              <CardContent className="flex items-center justify-center h-32">
-                <p className="text-muted-foreground">Loading your assessments...</p>
-              </CardContent>
-            </Card>
-          ) : savedAssessments.length > 0 ? (
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Previous Assessments
-                </CardTitle>
-                <CardDescription>
-                  Review your past career recommendations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {savedAssessments.map((assessment) => {
-                    let recommendation;
-                    let title = "Career Assessment";
-                    
-                    try {
-                      recommendation = JSON.parse(assessment.recommendation);
-                      
-                      if (typeof recommendation === 'string') {
-                        recommendation = JSON.parse(recommendation);
-                      }
-                      
-                      title = recommendation?.primaryCareer?.title || "Career Assessment";
-                    } catch (error) {
-                      console.error('Error parsing saved assessment:', error);
-                      console.log('Assessment data:', assessment.recommendation);
-                    }
-                    
-                    return (
-                      <div
-                        key={assessment.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer"
-                        onClick={() => handleViewRecommendation(assessment.recommendation, assessment.id)}
-                      >
-                        <div>
-                          <h3 className="font-semibold">
-                            {title}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            Completed on {new Date(assessment.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <Badge variant="secondary">View</Badge>
+          {/* Previous Assessments */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-5 w-5" />
+                <CardTitle>Previous Assessments</CardTitle>
+              </div>
+              <CardDescription>
+                Review your past career recommendations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              ) : assessments.length > 0 ? (
+                <div className="space-y-2">
+                  {assessments.map((assessment) => (
+                    <div
+                      key={assessment.id}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => navigate(`/results/${assessment.id}`)}
+                    >
+                      <div>
+                        <p className="font-medium">{assessment.primary_career}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Completed on {format(new Date(assessment.completed_at), 'M/d/yyyy')}
+                        </p>
                       </div>
-                    );
-                  })}
+                      <Button variant="ghost" size="sm">
+                        View
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="md:col-span-2">
-              <CardContent className="flex items-center justify-center h-32">
-                <p className="text-muted-foreground">
-                  No previous assessments found. Take your first assessment to get started!
-                </p>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <p className="text-sm text-muted-foreground">No assessments yet</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </div>
-      {/* Page Footer */}
-      <footer className="bg-gray-100 w-full text-center py-10 mt-10 border-t border-gray-300">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row md:justify-between md:items-start gap-6 md:gap-0">
+      </main>
 
-          {/* Logo & About */}
-          <div className="flex flex-col items-center md:items-start space-y-3">
-            {/* Logo placeholder */}
-            <div className="text-2xl font-bold text-black">CareerPath</div>
-            <p className="text-gray-700 text-sm max-w-xs">
-              Career Path Advisor helps you find the right career through assessments, AI guidance, and personalized recommendations.
-            </p>
-          </div>
-
-          {/* Quick Links */}
-          <div className="flex flex-col items-center md:items-start space-y-2">
-            <h4 className="font-semibold text-black">Quick Links</h4>
-            <a href="#features" className="text-gray-700 hover:text-black text-sm">Features</a>
-            <a href="#get-started" className="text-gray-700 hover:text-black text-sm">Get Started</a>
-            <a href="#contact" className="text-gray-700 hover:text-black text-sm">Contact</a>
-          </div>
-
-          {/* Social & Contact */}
-          <div className="flex flex-col items-center md:items-start space-y-3">
-            <h4 className="font-semibold text-black">Follow Us</h4>
-            <div className="flex space-x-4">
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-black">
-                Twitter
-              </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-black">
-                LinkedIn
-              </a>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-black">
-                GitHub
-              </a>
+      {/* Footer */}
+      <footer className="border-t mt-12">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div>
+              <h3 className="font-bold mb-2">CareerPath</h3>
+              <p className="text-sm text-muted-foreground">
+                Career Path Advisor helps you find the right career through assessments, AI guidance, and personalized recommendations.
+              </p>
             </div>
-            <p className="text-gray-500 text-xs mt-2">
-              {new Date().getFullYear()} Career Path Advisor. All rights reserved.
-            </p>
+            <div>
+              <h4 className="font-semibold mb-2">Quick Links</h4>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li>Features</li>
+                <li>Get Started</li>
+                <li>Contact</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Follow Us</h4>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li>Twitter</li>
+                <li>LinkedIn</li>
+                <li>GitHub</li>
+              </ul>
+            </div>
           </div>
-
+          <div className="mt-8 pt-4 border-t text-center text-sm text-muted-foreground">
+            2025 Career Path Advisor. All rights reserved.
+          </div>
         </div>
       </footer>
     </div>
   );
-}
+};
+
+export default Dashboard;

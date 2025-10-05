@@ -26,7 +26,7 @@ All colors MUST be HSL.
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
+    --accent: 240 100% 90%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -101,51 +101,5 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-  }
-}
-
-/* Custom styles for chat markdown */
-@layer components {
-  .chat-markdown {
-    @apply text-sm leading-relaxed;
-  }
-  
-  .chat-markdown h1,
-  .chat-markdown h2,
-  .chat-markdown h3 {
-    @apply font-semibold text-current;
-  }
-  
-  .chat-markdown p {
-    @apply mb-2 last:mb-0;
-  }
-  
-  .chat-markdown ul,
-  .chat-markdown ol {
-    @apply mb-2 space-y-1;
-  }
-  
-  .chat-markdown li {
-    @apply text-sm;
-  }
-  
-  .chat-markdown strong {
-    @apply font-semibold text-current;
-  }
-  
-  .chat-markdown em {
-    @apply italic;
-  }
-  
-  .chat-markdown code {
-    @apply px-1 py-0.5 bg-black/10 dark:bg-white/10 rounded text-xs font-mono;
-  }
-  
-  .chat-markdown blockquote {
-    @apply border-l-2 border-gray-300 dark:border-gray-600 pl-3 ml-2 italic opacity-80;
-  }
-  
-  .chat-markdown hr {
-    @apply border-gray-300 dark:border-gray-600 my-2;
   }
 }
