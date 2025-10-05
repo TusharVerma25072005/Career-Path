@@ -67,4 +67,4 @@ Feel free to contribute to this project by submitting issues or pull requests.
 
 ## License
 
-[Specify your license here, e.g., MIT License]
+MIT License
